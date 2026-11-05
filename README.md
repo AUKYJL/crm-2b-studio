@@ -1,78 +1,32 @@
-# React + TypeScript + Vite
+# СтройКонтроль
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Подключение проверочного Supabase
 
-Currently, two official plugins are available:
+1. Создайте отдельный пустой облачный проект Supabase для проверки CRM. Установите зависимости через `npm ci`.
+2. В корне репозитория авторизуйтесь, привяжите проект и проверьте список миграций перед применением.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+   ```sh
+   npx supabase@3.0.0 login
+   npx supabase@3.0.0 link --project-ref <project-ref>
+   npx supabase@3.0.0 migration list --remote
+   npx supabase@3.0.0 db push --remote --dry-run
+   ```
 
-## React Compiler
+3. Сверьте целевой проект и миграции из `supabase/migrations/`, затем вручную примените их командой `npx supabase@3.0.0 db push --remote`.
+4. В Dashboard откройте настройки Auth и выключите **Allow new users to sign up**. Оставьте вход по email и паролю включённым. [Настройки Supabase Auth](https://supabase.com/docs/guides/auth/general-configuration)
+5. Скопируйте `.env.example` в `.env.local` и заполните URL и publishable key проекта. После изменений схемы обновляйте `src/shared/api/database.types.ts` командой `npm run db:types`. Она читает схему привязанного проекта. [Генерация типов Supabase](https://supabase.com/docs/guides/api/rest/generating-types)
+6. Скопируйте `.env.seed.example` в `.env.seed`. Укажите тот же URL и publishable key, отдельный secret key и три разных пароля, соответствующих политике Auth проекта. Из корня репозитория запустите `npm run seed:demo`. Храните secret key и пароли только в локальном `.env.seed`.
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+Сид рассчитан на один запуск в пустом проекте. Он остановится при наличии аккаунтов или профилей. Если выполнение прервалось после создания аккаунтов, запустите его в новом пустом проверочном проекте после применения миграций.
 
-Note: This will impact Vite dev & build performances.
-You can also try [the experimental native React Compiler support in plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md#rust-react-compiler) by using `compiler: true` in the plugin options instead of using the Babel plugin.
+## Проверка ролей
 
-## Expanding the ESLint configuration
+Войдите по очереди с паролями из `.env.seed`. До подключения интерфейса используйте Supabase JS с publishable key и `signInWithPassword`. Для каждой сессии прочитайте собственную роль из `profiles`, затем `objects`, `tasks` и `task_events`. [Вход через Supabase JS](https://supabase.com/docs/reference/javascript/auth-signinwithpassword)
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+| Email | Роль | Видимые задачи |
+| --- | --- | --- |
+| `manager@example.com` | `manager` | 5 задач на двух объектах, по одной в каждом статусе |
+| `executor1@example.com` | `executor` | 3 назначенные задачи |
+| `executor2@example.com` | `executor` | 2 назначенные задачи |
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
-```
-
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
-```
+Проверьте историю переходов и комментарий у задачи в статусе `rework`. У каждого исполнителя должны быть видны события только его задач.
