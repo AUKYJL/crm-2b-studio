@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "db:types": "types=$(npx supabase@3.0.0 gen types typescript --remote --schema public) && test -n \"$types\" && printf '%s\\n' \"$types\" > src/shared/api/database.types.ts",
-    "seed:demo": "tsx scripts/seed-demo.ts"
+    "seed:demo": "tsx scripts/seed-demo.ts",
+    "test:security": "tsx --test scripts/security.test.ts"
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.3.0",
