@@ -1,6 +1,5 @@
-import { Navigate, createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter } from "react-router-dom";
 
-import { LoginPage } from "@/pages/login/login-page";
 import { MyTasksPage } from "@/pages/my-tasks/my-tasks-page";
 import { NotFoundPage } from "@/pages/not-found/not-found-page";
 import { ObjectDetailPage } from "@/pages/object-detail/object-detail-page";
@@ -9,19 +8,33 @@ import { TaskDetailPage } from "@/pages/task-detail/task-detail-page";
 
 import { ROUTERS } from "@/shared/constants/routers";
 
+import {
+  HomeRedirect,
+  LoginRoute,
+  ProtectedRoute,
+} from "@/app/router/auth-routes";
+import { USER_ROLE } from "@/features/auth/auth-store";
 import { AppLayout } from "@/features/navigation/app-layout";
 
 export const router = createBrowserRouter([
-  { path: ROUTERS.MAIN, element: <Navigate to={ROUTERS.OBJECTS} replace /> },
-  { path: ROUTERS.LOGIN, element: <LoginPage /> },
+  { path: ROUTERS.LOGIN, element: <LoginRoute /> },
   {
-    element: <AppLayout />,
+    element: <ProtectedRoute />,
     children: [
-      { path: ROUTERS.OBJECTS, element: <ObjectsPage /> },
-      { path: ROUTERS.OBJECT_DETAIL, element: <ObjectDetailPage /> },
-      { path: ROUTERS.TASK_DETAIL, element: <TaskDetailPage /> },
-      { path: ROUTERS.MY_TASKS, element: <MyTasksPage /> },
-      { path: "*", element: <NotFoundPage /> },
+      { path: ROUTERS.MAIN, element: <HomeRedirect /> },
+      {
+        element: <AppLayout />,
+        children: [
+          { path: ROUTERS.OBJECTS, element: <ObjectsPage /> },
+          { path: ROUTERS.OBJECT_DETAIL, element: <ObjectDetailPage /> },
+          { path: ROUTERS.TASK_DETAIL, element: <TaskDetailPage /> },
+          {
+            element: <ProtectedRoute role={USER_ROLE.EXECUTOR} />,
+            children: [{ path: ROUTERS.MY_TASKS, element: <MyTasksPage /> }],
+          },
+          { path: "*", element: <NotFoundPage /> },
+        ],
+      },
     ],
   },
 ]);

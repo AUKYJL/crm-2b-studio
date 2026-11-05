@@ -10,12 +10,35 @@ import {
   Typography,
 } from "@/shared/ui/typography";
 
+import { USER_ROLE, useAuthStore } from "@/features/auth/auth-store";
+import { SignOutButton } from "@/features/auth/sign-out-button";
+
 const links = [
   { to: ROUTERS.OBJECTS, label: "Объекты", icon: Building2 },
-  { to: ROUTERS.MY_TASKS, label: "Мои задачи", icon: ListTodo },
+  {
+    to: ROUTERS.MY_TASKS,
+    label: "Мои задачи",
+    icon: ListTodo,
+    executorOnly: true,
+  },
 ];
 
 export function AppLayout() {
+  const profile = useAuthStore((state) => state.profile);
+  if (!profile) return null;
+
+  const { full_name, role } = profile;
+  const initials = full_name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
+  const visibleLinks = links.filter(
+    (link) => !link.executorOnly || role === USER_ROLE.EXECUTOR,
+  );
+
   return (
     <div className="flex min-h-dvh">
       <aside className="border-sidebar-border bg-sidebar text-sidebar-foreground sticky top-0 flex h-dvh w-56 shrink-0 flex-col border-r p-3">
@@ -28,7 +51,7 @@ export function AppLayout() {
           </Typography>
         </div>
         <nav aria-label="Разделы CRM" className="space-y-1">
-          {links.map(({ to, label, icon: Icon }) => (
+          {visibleLinks.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}
@@ -52,35 +75,39 @@ export function AppLayout() {
             </NavLink>
           ))}
         </nav>
-        <footer className="border-sidebar-border mt-auto flex items-center gap-3 border-t px-2 pt-4 pb-3">
-          <span
-            aria-hidden="true"
-            className="bg-sidebar-accent grid size-9 place-items-center rounded-full"
-          >
-            <Typography
-              as={TYPOGRAPHY_AS.SPAN}
-              variant={TYPOGRAPHY_VARIANT.CAPTION}
-              className="font-semibold"
+        <footer className="border-sidebar-border mt-auto space-y-2 border-t px-2 pt-4 pb-3">
+          <div className="flex items-center gap-3">
+            <span
+              aria-hidden="true"
+              className="bg-sidebar-accent grid size-9 shrink-0 place-items-center rounded-full"
             >
-              ИП
-            </Typography>
-          </span>
-          <div>
-            <Typography
-              as={TYPOGRAPHY_AS.P}
-              variant={TYPOGRAPHY_VARIANT.BODY_SMALL}
-              className="font-semibold"
-            >
-              Иван Петров
-            </Typography>
-            <Typography
-              as={TYPOGRAPHY_AS.P}
-              variant={TYPOGRAPHY_VARIANT.CAPTION}
-              color={TYPOGRAPHY_COLOR.SECONDARY}
-            >
-              Исполнитель · демо
-            </Typography>
+              <Typography
+                as={TYPOGRAPHY_AS.SPAN}
+                variant={TYPOGRAPHY_VARIANT.CAPTION}
+                className="font-semibold"
+              >
+                {initials}
+              </Typography>
+            </span>
+            <div className="min-w-0">
+              <Typography
+                as={TYPOGRAPHY_AS.P}
+                variant={TYPOGRAPHY_VARIANT.BODY_SMALL}
+                className="truncate font-semibold"
+                title={full_name}
+              >
+                {full_name}
+              </Typography>
+              <Typography
+                as={TYPOGRAPHY_AS.P}
+                variant={TYPOGRAPHY_VARIANT.CAPTION}
+                color={TYPOGRAPHY_COLOR.SECONDARY}
+              >
+                {role === USER_ROLE.MANAGER ? "Постановщик" : "Исполнитель"}
+              </Typography>
+            </div>
           </div>
+          <SignOutButton />
         </footer>
       </aside>
       <main className="min-w-0 flex-1 p-8">

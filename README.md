@@ -21,7 +21,7 @@
 
 ## Проверка ролей
 
-Войдите по очереди с паролями из `.env.seed`. До подключения интерфейса используйте Supabase JS с publishable key и `signInWithPassword`. Для каждой сессии прочитайте собственную роль из `profiles`, затем `objects`, `tasks` и `task_events`. [Вход через Supabase JS](https://supabase.com/docs/reference/javascript/auth-signinwithpassword)
+Запустите `npm run dev` и откройте `/login`. Войдите по очереди с паролями из `.env.seed`. Постановщик открывает `/objects`, исполнители — `/my-tasks`. Проверьте имя и роль в боковой панели, затем выйдите через «Выйти». Для проверки данных отдельно прочитайте `profiles`, `objects`, `tasks` и `task_events` через Supabase JS с пользовательской сессией. [Вход через Supabase JS](https://supabase.com/docs/reference/javascript/auth-signinwithpassword)
 
 | Email | Роль | Видимые задачи |
 | --- | --- | --- |
