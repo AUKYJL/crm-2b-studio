@@ -19,10 +19,10 @@ import {
   Typography,
 } from "@/shared/ui/typography";
 
-import { ObjectTasksTable } from "./object-tasks-table";
 import type { UserRole } from "@/features/auth/auth-store";
 import { taskStatuses } from "@/features/task-status/statuses";
 import { useObjectTasks } from "@/features/tasks/tasks-api";
+import { TasksTable } from "@/features/tasks/tasks-table";
 
 export function ObjectTasks({
   objectId,
@@ -106,7 +106,7 @@ export function ObjectTasks({
           </Button>
         </div>
       ) : tasks?.length ? (
-        <ObjectTasksTable tasks={tasks} />
+        <TasksTable view="object" tasks={tasks} />
       ) : (
         <Typography
           as={TYPOGRAPHY_AS.P}

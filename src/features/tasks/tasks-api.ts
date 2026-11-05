@@ -6,16 +6,61 @@ import { supabase } from "@/shared/api/supabase";
 import { USER_ROLE, type UserRole } from "@/features/auth/auth-store";
 import { objectsKey } from "@/features/objects/objects-api";
 
-export type TaskListItem = {
+type TaskListRow = {
   id: string;
   title: string;
   status: Enums<"task_status">;
-  assignee: { full_name: string } | null;
   created_at: string;
 };
 
+export type TaskListItem = TaskListRow & {
+  assignee: { full_name: string } | null;
+};
+
+export type MyTaskListItem = TaskListRow & {
+  object: { name: string };
+};
+
 const pageSize = 500;
-export const objectTasksKey = (objectId: string) => ["object-tasks", objectId];
+export const myTasksKey = ["my-tasks"] as const;
+export const objectTasksKeys = ["object-tasks"] as const;
+export const objectTasksKey = (objectId: string) => [
+  ...objectTasksKeys,
+  objectId,
+];
+export const executorsKey = ["executors"] as const;
+
+export function useMyTasks(userId: string) {
+  return useQuery({
+    queryKey: [...myTasksKey, userId],
+    gcTime: 0,
+    retry: false,
+    queryFn: async ({ signal }) => {
+      const tasks: MyTaskListItem[] = [];
+
+      for (let offset = 0; ; offset += pageSize) {
+        const { data, error } = await supabase
+          .from("tasks")
+          .select("id, title, status, created_at, object:objects!inner(name)")
+          .eq("assignee_id", userId)
+          .is("deleted_at", null)
+          .order("created_at", { ascending: false })
+          .order("id")
+          .range(offset, offset + pageSize - 1)
+          .abortSignal(signal);
+
+        if (error) throw error;
+        tasks.push(...data);
+        if (data.length < pageSize) break;
+      }
+
+      return tasks.sort(
+        (a, b) =>
+          Number(a.status === "accepted") - Number(b.status === "accepted"),
+      );
+    },
+  });
+}
 
 export function useObjectTasks(
   objectId: string,
@@ -50,9 +95,10 @@ export function useObjectTasks(
   });
 }
 
-export function useExecutors(userId: string) {
+export function useExecutors(userId: string, enabled = true) {
   return useQuery({
-    queryKey: ["executors", userId],
+    queryKey: [...executorsKey, userId],
+    enabled,
     queryFn: async ({ signal }) => {
       const executors: { id: string; full_name: string }[] = [];
 

@@ -39,10 +39,11 @@ async function listObjects(signal: AbortSignal) {
   }
 }
 
-export function useObjects(userId: string, role: UserRole) {
+export function useObjects(userId: string, role: UserRole, enabled = true) {
   return useQuery({
     queryKey: [...objectsKey, userId, role],
     queryFn: ({ signal }) => listObjects(signal),
+    enabled,
     retry: false,
   });
 }
